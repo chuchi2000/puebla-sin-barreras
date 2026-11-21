@@ -191,6 +191,14 @@ const conectarPaneles = () => {
 
   // La leyenda arranca plegada en celular
   if (esCelular()) document.querySelector('.leyenda').open = false;
+
+  // Los paneles empiezan debajo de la barra, mida lo que mida
+  const barra = document.querySelector('.barra');
+  const actualizarAltoBarra = () => {
+    document.documentElement.style.setProperty('--alto-barra', `${barra.offsetHeight + barra.offsetTop}px`);
+  };
+  actualizarAltoBarra();
+  new ResizeObserver(actualizarAltoBarra).observe(barra);
 };
 
 // Filtros
@@ -414,7 +422,7 @@ const conectarAsistente = () => {
     burbuja.className = `burbuja burbuja-${tipo}`;
     burbuja.textContent = texto;
     salida.appendChild(burbuja);
-    salida.scrollTop = salida.scrollHeight;
+    burbuja.scrollIntoView({ block: 'nearest' });
     return burbuja;
   };
 
@@ -453,7 +461,7 @@ const conectarAsistente = () => {
     } finally {
       boton.disabled = false;
       boton.textContent = 'Preguntar';
-      salida.scrollTop = salida.scrollHeight;
+      burbuja.scrollIntoView({ block: 'nearest' });
     }
   });
 

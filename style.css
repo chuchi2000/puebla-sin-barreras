@@ -16,6 +16,9 @@
   --sombra: 0 2px 10px rgba(18, 28, 54, 0.14);
   --fuente: "Atkinson Hyperlegible", system-ui, sans-serif;
   --radio: 12px;
+  /* Altura real de la barra flotante; app.js la actualiza al cambiar */
+  --alto-barra: 100px;
+  --arriba-paneles: calc(var(--alto-barra) + 24px);
 }
 
 * { box-sizing: border-box; }
@@ -208,7 +211,7 @@ button { font-family: inherit; }
 }
 
 /* Ficha del lugar */
-.ficha { top: 132px; right: 12px; width: 400px; max-height: calc(100vh - 156px); }
+.ficha { top: var(--arriba-paneles); right: 12px; width: 400px; max-height: calc(100vh - var(--arriba-paneles) - 24px); }
 /* Si el asistente está abierto, la ficha se corre a su izquierda */
 body:has(#panel-asistente:not([hidden])) .ficha { right: 444px; }
 .ficha-cabecera { display: flex; align-items: stretch; gap: 10px; margin-bottom: 14px; }
@@ -297,7 +300,7 @@ body:has(#panel-asistente:not([hidden])) .ficha { right: 444px; }
 .leyenda ul { list-style: none; margin: 0; padding: 0 12px 10px; display: grid; gap: 6px; }
 .leyenda li { display: flex; align-items: center; gap: 8px; }
 
-.panel-lugares { top: 132px; left: 12px; width: 360px; max-height: calc(100vh - 132px - 150px); padding-top: 12px; }
+.panel-lugares { top: var(--arriba-paneles); left: 12px; width: 360px; max-height: calc(100vh - var(--arriba-paneles) - 150px); padding-top: 12px; }
 .lista-lugares { list-style: none; margin: 0; padding: 0; }
 .lista-lugares li + li { border-top: 1px solid var(--borde); }
 .lista-lugares button {
@@ -343,12 +346,18 @@ body:has(#panel-asistente:not([hidden])) .ficha { right: 444px; }
   right: 12px;
   bottom: 84px;
   width: 420px;
-  max-height: calc(100vh - 132px - 96px);
-  display: flex;
-  flex-direction: column;
+  max-height: calc(100vh - var(--arriba-paneles) - 96px);
 }
 .asistente-intro { margin: 0 0 10px; color: var(--tinta-suave); }
 .sugerencias { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+/* Con una respuesta en pantalla, las sugerencias se vuelven chips pequeños */
+.asistente:has(.burbuja) .sugerencia {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  border-width: 1.5px;
+}
+.asistente:has(.burbuja) .asistente-intro { display: none; }
 .asistente button {
   min-height: 44px;
   padding: 0 14px;
@@ -369,9 +378,6 @@ body:has(#panel-asistente:not([hidden])) .ficha { right: 444px; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: none;
-  max-height: 40vh;
-  overflow-y: auto;
   margin-bottom: 10px;
 }
 .chat:empty { display: none; }
@@ -418,13 +424,12 @@ body:has(#panel-asistente:not([hidden])) .ficha { right: 444px; }
     right: 0;
     bottom: 0;
     width: auto;
-    max-height: 68vh;
+    max-height: calc(100vh - var(--arriba-paneles));
     border-radius: 16px 16px 0 0;
     border-bottom: 0;
     padding: 14px 16px 20px;
   }
-  .panel-asistente { bottom: 0; max-height: 80vh; }
-  .chat { max-height: 32vh; }
+  .panel-asistente { bottom: 0; }
   .ficha h2 { font-size: 1rem; }
   .esquina-izquierda { left: 8px; bottom: 26px; }
   .leyenda { max-width: 260px; }
