@@ -39,7 +39,10 @@ const dibujarMarcadores = () => {
       fillOpacity: 0.9,
     }).addTo(mapa);
     marcador.bindPopup(`<strong>${lugar.nombre}</strong><br>${texto}`);
-    marcador.on('click', () => mostrarFicha(lugar));
+    marcador.on('click', () => {
+      if (window.matchMedia('(min-width: 900px)').matches) marcador.closePopup();
+      mostrarFicha(lugar);
+    });
     marcadores.set(lugar.id, marcador);
   }
 };
@@ -57,7 +60,6 @@ const formatearValor = (valor) => {
 
 const CAMPOS_FICHA = [
   ['entrada_sin_escalones', 'Entrada sin escalones'],
-  ['rampa', 'Rampa'],
   ['elevador', 'Elevador'],
   ['bano_adaptado', 'Baño adaptado'],
   ['notas', 'Notas'],
@@ -81,17 +83,31 @@ const mostrarFicha = (lugar) => {
     ? `<img src="${escapar(lugar.foto)}" alt="Foto de ${escapar(lugar.nombre)}">`
     : '';
 
-  document.getElementById('ficha').innerHTML = `
-    <h2>${escapar(lugar.nombre)}</h2>
-    <p class="tipo">${formatearValor(lugar.tipo)}</p>
-    <p class="direccion">${formatearValor(lugar.direccion)}</p>
+  const ficha = document.getElementById('ficha');
+  ficha.innerHTML = `
+    <div class="ficha-cabecera">
+      <h2>${escapar(lugar.nombre)}</h2>
+      <button type="button" class="cerrar-ficha" aria-label="Cerrar ficha">&times;</button>
+    </div>
+    <section class="como-entrar">
+      <h3>Cómo entrar</h3>
+      <p>${formatearValor(lugar.rampa)}</p>
+    </section>
     <div class="estado-chip estado-${claveEstado}"><span class="punto punto-${claveEstado === 'sin_dato' ? 'gris' : claveEstado}"></span>${texto}</div>
     ${avisoFuente}
+    <p class="tipo">${formatearValor(lugar.tipo)}</p>
+    <p class="direccion">${formatearValor(lugar.direccion)}</p>
     <dl>${filas}</dl>
     ${foto}
     <p class="nota-coordenadas">Coordenadas aproximadas del lugar, no de la entrada accesible.</p>
   `;
-  document.getElementById('ficha').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  ficha.querySelector('.cerrar-ficha').addEventListener('click', cerrarFicha);
+  ficha.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+const cerrarFicha = () => {
+  document.getElementById('ficha').innerHTML =
+    '<p class="ficha-vacia">Toca un lugar en el mapa para ver su ficha de accesibilidad.</p>';
 };
 
 // Filtros
@@ -152,7 +168,8 @@ const irALugar = (id) => {
   if (!lugar) return;
   if (marcador) {
     mapa.setView(marcador.getLatLng(), 17);
-    marcador.openPopup();
+    // En escritorio la ficha va sobre el mapa; el popup solo estorba.
+    if (window.matchMedia('(max-width: 899px)').matches) marcador.openPopup();
   }
   mostrarFicha(lugar);
 };
@@ -315,23 +332,37 @@ const conectarAsistente = () => {
   const formulario = document.getElementById('form-pregunta');
   const boton = document.getElementById('btn-preguntar');
   const salida = document.getElementById('respuesta');
+  const campoPregunta = document.getElementById('pregunta');
+
+  // Chat: cada pregunta y respuesta es una burbuja
+  const agregarBurbuja = (texto, tipo) => {
+    const burbuja = document.createElement('div');
+    burbuja.className = `burbuja burbuja-${tipo}`;
+    burbuja.textContent = texto;
+    salida.appendChild(burbuja);
+    salida.scrollTop = salida.scrollHeight;
+    return burbuja;
+  };
 
   formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
-    const pregunta = document.getElementById('pregunta').value.trim();
+    const pregunta = campoPregunta.value.trim();
     if (!pregunta) return;
 
     boton.disabled = true;
     boton.textContent = 'Pensando...';
-    salida.classList.remove('error');
-    salida.textContent = '';
+    agregarBurbuja(pregunta, 'usuario');
+    campoPregunta.value = '';
+    const burbuja = agregarBurbuja('Pensando...', 'asistente');
+    burbuja.classList.add('pensando');
 
     try {
       const { texto, ids } = await preguntarAsistente(pregunta);
-      salida.textContent = texto;
+      burbuja.classList.remove('pensando');
+      burbuja.textContent = texto;
       resaltarLugares(ids);
       if (ids.length > 0) {
-        salida.insertAdjacentHTML(
+        burbuja.insertAdjacentHTML(
           'beforeend',
           `<p class="nota-resaltado">Lugares resaltados en el mapa: ${ids.length}. <button type="button" id="ver-mapa" class="secundario">Ver en el mapa</button></p>`
         );
@@ -340,13 +371,23 @@ const conectarAsistente = () => {
         });
       }
     } catch (error) {
-      salida.classList.add('error');
-      salida.textContent = error.message;
+      burbuja.classList.remove('pensando');
+      burbuja.classList.add('error');
+      burbuja.textContent = error.message;
       if (!leerLlave()) config.open = true;
     } finally {
       boton.disabled = false;
       boton.textContent = 'Preguntar';
+      salida.scrollTop = salida.scrollHeight;
     }
+  });
+
+  // Preguntas sugeridas: se envían con un toque
+  document.querySelectorAll('.sugerencia').forEach((sugerencia) => {
+    sugerencia.addEventListener('click', () => {
+      campoPregunta.value = sugerencia.dataset.pregunta;
+      formulario.requestSubmit();
+    });
   });
 };
 
