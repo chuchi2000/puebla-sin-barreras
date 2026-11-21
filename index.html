@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puebla sin barreras</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="aviso" role="note">
+    Prototipo: datos tomados de fuentes publicadas, pendientes de verificar en campo
+  </div>
+
+  <header class="cabecera">
+    <h1>Puebla sin barreras</h1>
+    <p>Planea tu recorrido en silla de ruedas por el Centro Histórico sabiendo antes qué lugares puedes visitar.</p>
+  </header>
+
+  <main>
+    <section class="bloque-mapa" aria-label="Mapa de lugares">
+      <div id="mapa"></div>
+      <ul class="leyenda" aria-label="Leyenda del semáforo">
+        <li><span class="punto punto-verde"></span> Verde: se entra y se recorre sin ayuda</li>
+        <li><span class="punto punto-amarillo"></span> Amarillo: con ayuda o solo una parte</li>
+        <li><span class="punto punto-rojo"></span> Rojo: no se puede entrar en silla</li>
+        <li><span class="punto punto-gris"></span> Gris: por verificar</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
