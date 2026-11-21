@@ -94,11 +94,110 @@ const mostrarFicha = (lugar) => {
   document.getElementById('ficha').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
+// Filtros
+const filtros = { estado: 'todos', campos: new Set(), tipo: '' };
+
+// Un null nunca cumple. Un string (como la descripción de la rampa) cuenta como que sí hay.
+const cumpleCampo = (valor) => valor === true || (typeof valor === 'string' && valor.trim() !== '');
+
+const cumpleFiltros = (lugar) => {
+  if (filtros.estado !== 'todos' && lugar.estado !== filtros.estado) return false;
+  if (filtros.tipo && lugar.tipo !== filtros.tipo) return false;
+  for (const campo of filtros.campos) {
+    if (!cumpleCampo(lugar[campo])) return false;
+  }
+  return true;
+};
+
+const textoEstadoCorto = (estado) => infoEstado(estado).texto.split(':')[0];
+
+const aplicarFiltros = () => {
+  const visibles = lugares.filter(cumpleFiltros);
+  const idsVisibles = new Set(visibles.map((l) => l.id));
+
+  for (const [id, marcador] of marcadores) {
+    if (idsVisibles.has(id)) marcador.addTo(mapa);
+    else mapa.removeLayer(marcador);
+  }
+
+  document.getElementById('contador').textContent =
+    visibles.length === 1 ? '1 lugar' : `${visibles.length} lugares`;
+
+  const lista = document.getElementById('lista-lugares');
+  lista.innerHTML = visibles
+    .map((lugar) => {
+      const clave = ESTADOS[lugar.estado] ? lugar.estado : 'gris';
+      return `<li><button type="button" data-id="${escapar(lugar.id)}">
+        <span class="punto punto-${clave}"></span>
+        <span>${escapar(lugar.nombre)}</span>
+        <span class="estado-texto">${textoEstadoCorto(lugar.estado)}</span>
+      </button></li>`;
+    })
+    .join('');
+
+  const sinResultados = document.getElementById('sin-resultados');
+  if (visibles.length === 0) {
+    sinResultados.textContent = filtros.campos.has('bano_adaptado')
+      ? 'Aún no hay datos verificados de baños adaptados.'
+      : 'Ningún lugar cumple estos filtros.';
+    sinResultados.hidden = false;
+  } else {
+    sinResultados.hidden = true;
+  }
+};
+
+const irALugar = (id) => {
+  const lugar = lugares.find((l) => l.id === id);
+  const marcador = marcadores.get(id);
+  if (!lugar) return;
+  if (marcador) {
+    mapa.setView(marcador.getLatLng(), 17);
+    marcador.openPopup();
+  }
+  mostrarFicha(lugar);
+};
+
+const conectarFiltros = () => {
+  document.querySelectorAll('.btn-estado').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      document.querySelectorAll('.btn-estado').forEach((b) => b.classList.remove('activo'));
+      boton.classList.add('activo');
+      filtros.estado = boton.dataset.estado;
+      aplicarFiltros();
+    });
+  });
+
+  document.querySelectorAll('.grupo-casillas input').forEach((casilla) => {
+    casilla.addEventListener('change', () => {
+      if (casilla.checked) filtros.campos.add(casilla.dataset.campo);
+      else filtros.campos.delete(casilla.dataset.campo);
+      aplicarFiltros();
+    });
+  });
+
+  const selectTipo = document.getElementById('filtro-tipo');
+  const tipos = [...new Set(lugares.map((l) => l.tipo).filter(Boolean))].sort();
+  for (const tipo of tipos) {
+    selectTipo.insertAdjacentHTML('beforeend', `<option value="${escapar(tipo)}">${escapar(tipo)}</option>`);
+  }
+  selectTipo.addEventListener('change', () => {
+    filtros.tipo = selectTipo.value;
+    aplicarFiltros();
+  });
+
+  document.getElementById('lista-lugares').addEventListener('click', (evento) => {
+    const boton = evento.target.closest('button[data-id]');
+    if (boton) irALugar(boton.dataset.id);
+  });
+};
+
 const iniciar = async () => {
   try {
     crearMapa();
     lugares = await cargarLugares();
     dibujarMarcadores();
+    conectarFiltros();
+    aplicarFiltros();
   } catch (error) {
     console.error(error);
     document.getElementById('mapa').insertAdjacentHTML(

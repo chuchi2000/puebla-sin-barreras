@@ -18,6 +18,27 @@
   </header>
 
   <main>
+    <section class="filtros" aria-label="Filtros">
+      <div class="grupo-estado" role="group" aria-label="Filtrar por estado">
+        <button type="button" class="btn-estado activo" data-estado="todos">Todos</button>
+        <button type="button" class="btn-estado" data-estado="verde"><span class="punto punto-verde"></span>Verde</button>
+        <button type="button" class="btn-estado" data-estado="amarillo"><span class="punto punto-amarillo"></span>Amarillo</button>
+        <button type="button" class="btn-estado" data-estado="rojo"><span class="punto punto-rojo"></span>Rojo</button>
+      </div>
+      <div class="grupo-casillas">
+        <label><input type="checkbox" data-campo="entrada_sin_escalones"> Entrada sin escalones</label>
+        <label><input type="checkbox" data-campo="rampa"> Rampa</label>
+        <label><input type="checkbox" data-campo="elevador"> Elevador</label>
+        <label><input type="checkbox" data-campo="bano_adaptado"> Baño adaptado</label>
+      </div>
+      <label class="campo-tipo">Tipo
+        <select id="filtro-tipo">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <p id="contador" class="contador" aria-live="polite"></p>
+    </section>
+
     <section class="bloque-mapa" aria-label="Mapa de lugares">
       <div id="mapa"></div>
       <ul class="leyenda" aria-label="Leyenda del semáforo">
@@ -26,6 +47,11 @@
         <li><span class="punto punto-rojo"></span> Rojo: no se puede entrar en silla</li>
         <li><span class="punto punto-gris"></span> Gris: por verificar</li>
       </ul>
+    </section>
+
+    <section class="resultados" aria-label="Lista de lugares">
+      <ul id="lista-lugares" class="lista-lugares"></ul>
+      <p id="sin-resultados" class="sin-resultados" role="status" hidden></p>
     </section>
 
     <section id="ficha" class="ficha" aria-live="polite" aria-label="Ficha del lugar">
