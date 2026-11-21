@@ -85,6 +85,53 @@ main {
 .punto-rojo { background: var(--rojo); }
 .punto-gris { background: var(--gris); }
 
+.ficha {
+  margin-top: 16px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fafafa;
+}
+.ficha-vacia { margin: 0; color: #444; }
+.ficha h2 { margin: 0 0 4px; font-size: 1.25rem; }
+.ficha .tipo { margin: 0 0 8px; color: #444; text-transform: capitalize; }
+.ficha .direccion { margin: 0 0 10px; }
+
+.estado-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.estado-chip .punto { border-color: #fff; }
+.estado-verde { background: var(--verde); }
+.estado-amarillo { background: #b26f00; }
+.estado-rojo { background: var(--rojo); }
+.estado-sin_dato { background: var(--gris); }
+
+.sin-verificar {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #5c4400;
+}
+.sin-verificar a { color: var(--acento); }
+
+.ficha dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 0 0 10px;
+}
+.ficha dt { font-weight: 600; }
+.ficha dd { margin: 0; }
+.ficha .sin-dato { color: #666; font-style: italic; }
+.ficha img { max-width: 100%; border-radius: 6px; margin: 8px 0; }
+.ficha .nota-coordenadas { margin: 0; font-size: 0.85rem; color: #555; }
+
 .leaflet-popup-content {
   font-size: 0.95rem;
 }

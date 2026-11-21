@@ -39,8 +39,59 @@ const dibujarMarcadores = () => {
       fillOpacity: 0.9,
     }).addTo(mapa);
     marcador.bindPopup(`<strong>${lugar.nombre}</strong><br>${texto}`);
+    marcador.on('click', () => mostrarFicha(lugar));
     marcadores.set(lugar.id, marcador);
   }
+};
+
+// Ficha
+const escapar = (texto) =>
+  String(texto).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const formatearValor = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return '<span class="sin-dato">Sin dato</span>';
+  if (valor === true) return 'Sí';
+  if (valor === false) return 'No';
+  return escapar(valor);
+};
+
+const CAMPOS_FICHA = [
+  ['entrada_sin_escalones', 'Entrada sin escalones'],
+  ['rampa', 'Rampa'],
+  ['elevador', 'Elevador'],
+  ['bano_adaptado', 'Baño adaptado'],
+  ['notas', 'Notas'],
+];
+
+const mostrarFicha = (lugar) => {
+  const claveEstado = ESTADOS[lugar.estado] ? lugar.estado : 'sin_dato';
+  const { texto } = infoEstado(lugar.estado);
+
+  const avisoFuente = lugar.verificado === null
+    ? `<p class="sin-verificar">Según fuente, sin verificar en persona.${
+        lugar.fuente ? ` <a href="${escapar(lugar.fuente)}" target="_blank" rel="noopener">Ver fuente</a>` : ''
+      }</p>`
+    : '';
+
+  const filas = CAMPOS_FICHA
+    .map(([campo, etiqueta]) => `<dt>${etiqueta}</dt><dd>${formatearValor(lugar[campo])}</dd>`)
+    .join('');
+
+  const foto = lugar.foto
+    ? `<img src="${escapar(lugar.foto)}" alt="Foto de ${escapar(lugar.nombre)}">`
+    : '';
+
+  document.getElementById('ficha').innerHTML = `
+    <h2>${escapar(lugar.nombre)}</h2>
+    <p class="tipo">${formatearValor(lugar.tipo)}</p>
+    <p class="direccion">${formatearValor(lugar.direccion)}</p>
+    <div class="estado-chip estado-${claveEstado}"><span class="punto punto-${claveEstado === 'sin_dato' ? 'gris' : claveEstado}"></span>${texto}</div>
+    ${avisoFuente}
+    <dl>${filas}</dl>
+    ${foto}
+    <p class="nota-coordenadas">Coordenadas aproximadas del lugar, no de la entrada accesible.</p>
+  `;
+  document.getElementById('ficha').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 const iniciar = async () => {
