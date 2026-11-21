@@ -212,6 +212,7 @@ Reglas:
 - Todos los datos vienen de fuentes publicadas (2020-2024) y NO se han verificado en campo. Dilo en cada respuesta, en una frase corta.
 - Responde en español, en texto plano sin markdown, en máximo 6 frases o una lista corta.
 - Si te piden un recorrido, ordena los lugares por cercanía usando lat y lng, y menciona el estado de cada uno.
+- Al final de la respuesta, en una línea aparte, escribe "IDS:" seguido de los id de los lugares que mencionaste, separados por comas y en el orden en que los recomiendas. Si no recomendaste ninguno, escribe "IDS: ninguno".
 
 Lugares (JSON):
 ${JSON.stringify(lugares)}`;
@@ -254,11 +255,40 @@ const preguntarAsistente = async (pregunta) => {
 
   const datos = await respuesta.json();
   if (datos.stop_reason === 'refusal') throw new Error('El asistente no pudo responder esa pregunta.');
-  return datos.content
+  const texto = datos.content
     .filter((bloque) => bloque.type === 'text')
     .map((bloque) => bloque.text)
     .join('\n')
     .trim();
+  return separarIds(texto);
+};
+
+// Separa la línea "IDS: a, b" del texto y devuelve solo ids que existen en lugares.json.
+const separarIds = (texto) => {
+  const coincidencia = texto.match(/^\s*IDS:\s*(.*)$/im);
+  if (!coincidencia) return { texto, ids: [] };
+  const idsValidos = new Set(lugares.map((l) => l.id));
+  const ids = coincidencia[1]
+    .split(',')
+    .map((id) => id.trim().toLowerCase())
+    .filter((id) => idsValidos.has(id));
+  return { texto: texto.replace(coincidencia[0], '').trim(), ids };
+};
+
+const ESTILO_NORMAL = { radius: 12, weight: 2, color: '#333' };
+const ESTILO_RESALTADO = { radius: 16, weight: 4, color: '#1565c0' };
+
+const resaltarLugares = (ids) => {
+  for (const marcador of marcadores.values()) marcador.setStyle(ESTILO_NORMAL);
+  const puntos = [];
+  for (const id of ids) {
+    const marcador = marcadores.get(id);
+    if (!marcador) continue;
+    marcador.setStyle(ESTILO_RESALTADO);
+    marcador.bringToFront();
+    if (mapa.hasLayer(marcador)) puntos.push(marcador.getLatLng());
+  }
+  if (puntos.length > 0) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 17 });
 };
 
 const conectarAsistente = () => {
@@ -297,7 +327,18 @@ const conectarAsistente = () => {
     salida.textContent = '';
 
     try {
-      salida.textContent = await preguntarAsistente(pregunta);
+      const { texto, ids } = await preguntarAsistente(pregunta);
+      salida.textContent = texto;
+      resaltarLugares(ids);
+      if (ids.length > 0) {
+        salida.insertAdjacentHTML(
+          'beforeend',
+          `<p class="nota-resaltado">Lugares resaltados en el mapa: ${ids.length}. <button type="button" id="ver-mapa" class="secundario">Ver en el mapa</button></p>`
+        );
+        document.getElementById('ver-mapa').addEventListener('click', () => {
+          document.getElementById('mapa').scrollIntoView({ behavior: 'smooth' });
+        });
+      }
     } catch (error) {
       salida.classList.add('error');
       salida.textContent = error.message;
