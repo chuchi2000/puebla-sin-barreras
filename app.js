@@ -191,6 +191,124 @@ const conectarFiltros = () => {
   });
 };
 
+// Asistente con la API de Anthropic.
+// La llave la pega el usuario y vive solo en localStorage de su navegador.
+const CLAVE_LOCAL = 'psb_llave_api';
+const MODELO = 'claude-opus-5';
+
+const leerLlave = () => localStorage.getItem(CLAVE_LOCAL) || '';
+
+const actualizarEstadoLlave = () => {
+  const estado = document.getElementById('estado-llave');
+  estado.textContent = leerLlave() ? 'Llave guardada en este navegador.' : 'Sin llave. Pega una para usar el asistente.';
+};
+
+const construirSystemPrompt = () => `Eres el asistente de "Puebla sin barreras", una página que ayuda a personas en silla de ruedas a planear un recorrido por el Centro Histórico de Puebla.
+
+Reglas:
+- Usa SOLO los datos del JSON de abajo. Nunca inventes lugares ni datos de accesibilidad. Si algo no está en el JSON, di que no tienes ese dato.
+- Un campo en null significa "sin dato". No lo cuentes como que cumple.
+- estado: verde = se entra y se recorre sin ayuda; amarillo = con ayuda o solo una parte; rojo = no se puede entrar en silla; null = por verificar.
+- Todos los datos vienen de fuentes publicadas (2020-2024) y NO se han verificado en campo. Dilo en cada respuesta, en una frase corta.
+- Responde en español, en texto plano sin markdown, en máximo 6 frases o una lista corta.
+- Si te piden un recorrido, ordena los lugares por cercanía usando lat y lng, y menciona el estado de cada uno.
+
+Lugares (JSON):
+${JSON.stringify(lugares)}`;
+
+const preguntarAsistente = async (pregunta) => {
+  const llave = leerLlave();
+  if (!llave) throw new Error('Falta la llave de la API. Ábrela en "Llave de la API de Anthropic" y pégala.');
+
+  let respuesta;
+  try {
+    respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': llave,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: MODELO,
+        max_tokens: 1024,
+        output_config: { effort: 'low' },
+        system: construirSystemPrompt(),
+        messages: [{ role: 'user', content: pregunta }],
+      }),
+    });
+  } catch {
+    throw new Error('No hay conexión con la API. Revisa tu internet.');
+  }
+
+  if (respuesta.status === 401) throw new Error('La llave no es válida. Revísala y guárdala de nuevo.');
+  if (!respuesta.ok) {
+    let detalle = '';
+    try {
+      const cuerpo = await respuesta.json();
+      detalle = cuerpo?.error?.message ? `: ${cuerpo.error.message}` : '';
+    } catch { /* sin detalle */ }
+    throw new Error(`La API respondió con error ${respuesta.status}${detalle}`);
+  }
+
+  const datos = await respuesta.json();
+  if (datos.stop_reason === 'refusal') throw new Error('El asistente no pudo responder esa pregunta.');
+  return datos.content
+    .filter((bloque) => bloque.type === 'text')
+    .map((bloque) => bloque.text)
+    .join('\n')
+    .trim();
+};
+
+const conectarAsistente = () => {
+  const entradaLlave = document.getElementById('llave-api');
+  const config = document.getElementById('config-llave');
+  actualizarEstadoLlave();
+  if (!leerLlave()) config.open = true;
+
+  document.getElementById('guardar-llave').addEventListener('click', () => {
+    const valor = entradaLlave.value.trim();
+    if (!valor) return;
+    localStorage.setItem(CLAVE_LOCAL, valor);
+    entradaLlave.value = '';
+    actualizarEstadoLlave();
+    config.open = false;
+  });
+
+  document.getElementById('borrar-llave').addEventListener('click', () => {
+    localStorage.removeItem(CLAVE_LOCAL);
+    entradaLlave.value = '';
+    actualizarEstadoLlave();
+  });
+
+  const formulario = document.getElementById('form-pregunta');
+  const boton = document.getElementById('btn-preguntar');
+  const salida = document.getElementById('respuesta');
+
+  formulario.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    const pregunta = document.getElementById('pregunta').value.trim();
+    if (!pregunta) return;
+
+    boton.disabled = true;
+    boton.textContent = 'Pensando...';
+    salida.classList.remove('error');
+    salida.textContent = '';
+
+    try {
+      salida.textContent = await preguntarAsistente(pregunta);
+    } catch (error) {
+      salida.classList.add('error');
+      salida.textContent = error.message;
+      if (!leerLlave()) config.open = true;
+    } finally {
+      boton.disabled = false;
+      boton.textContent = 'Preguntar';
+    }
+  });
+};
+
 const iniciar = async () => {
   try {
     crearMapa();
@@ -198,6 +316,7 @@ const iniciar = async () => {
     dibujarMarcadores();
     conectarFiltros();
     aplicarFiltros();
+    conectarAsistente();
   } catch (error) {
     console.error(error);
     document.getElementById('mapa').insertAdjacentHTML(

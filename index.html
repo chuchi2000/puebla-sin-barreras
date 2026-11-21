@@ -57,6 +57,29 @@
     <section id="ficha" class="ficha" aria-live="polite" aria-label="Ficha del lugar">
       <p class="ficha-vacia">Toca un lugar en el mapa para ver su ficha de accesibilidad.</p>
     </section>
+
+    <section class="asistente" aria-label="Asistente">
+      <h2>Pregúntale al asistente</h2>
+      <p class="asistente-intro">Responde solo con los datos de esta página. Ejemplo: "¿Qué museos puedo visitar sin ayuda?"</p>
+
+      <details id="config-llave" class="config-llave">
+        <summary>Llave de la API de Anthropic</summary>
+        <p class="nota-llave">Se guarda solo en este navegador (localStorage). Nunca se sube al repositorio.</p>
+        <div class="fila-llave">
+          <input type="password" id="llave-api" placeholder="sk-ant-..." autocomplete="off" aria-label="Llave de la API">
+          <button type="button" id="guardar-llave">Guardar</button>
+          <button type="button" id="borrar-llave" class="secundario">Borrar</button>
+        </div>
+        <p id="estado-llave" class="estado-llave" aria-live="polite"></p>
+      </details>
+
+      <form id="form-pregunta" class="form-pregunta">
+        <label for="pregunta" class="visualmente-oculto">Tu pregunta</label>
+        <textarea id="pregunta" rows="2" placeholder="Escribe tu pregunta..." required></textarea>
+        <button type="submit" id="btn-preguntar">Preguntar</button>
+      </form>
+      <div id="respuesta" class="respuesta" aria-live="polite"></div>
+    </section>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

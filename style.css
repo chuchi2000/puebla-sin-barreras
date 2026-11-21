@@ -235,6 +235,102 @@ main {
 .ficha img { max-width: 100%; border-radius: 6px; margin: 8px 0; }
 .ficha .nota-coordenadas { margin: 0; font-size: 0.85rem; color: #555; }
 
+.asistente {
+  margin-top: 20px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.asistente h2 { margin: 0 0 4px; font-size: 1.25rem; }
+.asistente-intro { margin: 0 0 10px; font-size: 0.95rem; color: #444; }
+
+.config-llave {
+  margin-bottom: 12px;
+  background: #f4f4f4;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.config-llave summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nota-llave { margin: 4px 0 8px; font-size: 0.85rem; color: #444; }
+.fila-llave {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.fila-llave input {
+  flex: 1 1 180px;
+  min-height: 44px;
+  font-size: 1rem;
+  padding: 0 10px;
+  border: 2px solid #333;
+  border-radius: 8px;
+}
+.estado-llave { margin: 6px 0 0; font-size: 0.9rem; font-weight: 600; }
+
+.asistente button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--acento);
+  border-radius: 8px;
+  background: var(--acento);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.asistente button.secundario {
+  background: #fff;
+  color: var(--acento);
+}
+.asistente button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.form-pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-pregunta textarea {
+  width: 100%;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 10px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.respuesta {
+  margin-top: 12px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+.respuesta:empty { display: none; }
+.respuesta.error {
+  background: #fdecea;
+  color: #7a1b1b;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .leaflet-popup-content {
   font-size: 0.95rem;
 }
