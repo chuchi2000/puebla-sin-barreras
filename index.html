@@ -6,39 +6,31 @@
   <title>Puebla sin barreras</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@600;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="aviso" role="note">
-    Prototipo: datos tomados de fuentes publicadas, pendientes de verificar en campo
-  </div>
+  <div id="mapa" aria-label="Mapa de lugares"></div>
 
-  <header class="cabecera">
-    <div class="placa azulejo cabecera-placa">
-      <div class="simbolo" aria-hidden="true">
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+  <header class="barra">
+    <div class="barra-fila">
+      <div class="marca">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="27" cy="8" r="4.5" fill="currentColor" stroke="none"/>
           <path d="M24 15v13h11l5 12"/><path d="M24 21l-5 2"/><path d="M16 25a11.5 11.5 0 1 0 15.5 14.5"/>
         </svg>
-      </div>
-      <div class="titulos">
         <h1>Puebla sin barreras</h1>
-        <p>Las rampas del Centro Histórico existen pero no están señalizadas. Esta es la placa que falta: qué lugares puedes visitar en silla de ruedas antes de salir.</p>
       </div>
-    </div>
-  </header>
-
-  <main class="app">
-    <section class="placa azulejo panel filtros" aria-label="Filtros">
-      <h2 class="titulo-seccion">Buscar lugares</h2>
       <div class="grupo-estado" role="group" aria-label="Filtrar por estado">
         <button type="button" class="btn-estado activo" data-estado="todos">Todos</button>
         <button type="button" class="btn-estado" data-estado="verde"><span class="punto punto-verde"></span>Verde</button>
         <button type="button" class="btn-estado" data-estado="amarillo"><span class="punto punto-amarillo"></span>Amarillo</button>
         <button type="button" class="btn-estado" data-estado="rojo"><span class="punto punto-rojo"></span>Rojo</button>
       </div>
+      <button type="button" id="btn-mas-filtros" class="btn-barra" aria-expanded="false" aria-controls="mas-filtros">Más filtros</button>
+    </div>
+    <div id="mas-filtros" class="mas-filtros" hidden>
       <div class="grupo-casillas">
         <label><input type="checkbox" data-campo="entrada_sin_escalones"> Entrada sin escalones</label>
         <label><input type="checkbox" data-campo="rampa"> Rampa</label>
@@ -50,58 +42,74 @@
           <option value="">Todos</option>
         </select>
       </label>
-      <p id="contador" class="contador" aria-live="polite"></p>
-    </section>
+    </div>
+    <p id="sin-resultados" class="sin-resultados" role="status" hidden></p>
+    <p class="aviso" role="note">Prototipo: datos tomados de fuentes publicadas, pendientes de verificar en campo</p>
+  </header>
 
-    <section class="zona-mapa" aria-label="Mapa de lugares">
-      <div id="mapa"></div>
-      <ul class="leyenda azulejo" aria-label="Leyenda del semáforo">
+  <aside id="ficha" class="panel-flotante ficha" aria-live="polite" aria-label="Ficha del lugar" hidden></aside>
+
+  <div class="esquina-izquierda">
+    <button type="button" id="btn-lugares" class="btn-flotante" aria-expanded="false" aria-controls="panel-lugares">
+      <span id="contador">Lugares (0)</span>
+    </button>
+    <details class="leyenda" open>
+      <summary>
+        <span class="puntos-leyenda" aria-hidden="true"><span class="punto punto-verde"></span><span class="punto punto-amarillo"></span><span class="punto punto-rojo"></span><span class="punto punto-gris"></span></span>
+        Leyenda
+      </summary>
+      <ul aria-label="Leyenda del semáforo">
         <li><span class="punto punto-verde"></span> Verde: se entra y se recorre sin ayuda</li>
         <li><span class="punto punto-amarillo"></span> Amarillo: con ayuda o solo una parte</li>
         <li><span class="punto punto-rojo"></span> Rojo: no se puede entrar en silla</li>
         <li><span class="punto punto-gris"></span> Gris: por verificar</li>
       </ul>
-      <section id="ficha" class="ficha placa azulejo panel" aria-live="polite" aria-label="Ficha del lugar">
-        <p class="ficha-vacia">Toca un lugar en el mapa para ver su ficha de accesibilidad.</p>
-      </section>
-    </section>
+    </details>
+  </div>
 
-    <section class="placa azulejo panel resultados" aria-label="Lista de lugares">
-      <h2 class="titulo-seccion">Lugares</h2>
-      <ul id="lista-lugares" class="lista-lugares"></ul>
-      <p id="sin-resultados" class="sin-resultados" role="status" hidden></p>
-    </section>
+  <aside id="panel-lugares" class="panel-flotante panel-lugares" aria-label="Lista de lugares" hidden>
+    <div class="panel-cabecera">
+      <h2>Lugares</h2>
+      <button type="button" class="cerrar-panel" data-panel="panel-lugares" aria-label="Cerrar lista">&times;</button>
+    </div>
+    <ul id="lista-lugares" class="lista-lugares"></ul>
+  </aside>
 
-    <section class="placa azulejo panel asistente" aria-label="Asistente">
-      <h2 class="titulo-seccion">Pregúntale al asistente</h2>
-      <p class="asistente-intro">Responde solo con los datos de esta página.</p>
+  <button type="button" id="btn-asistente" class="btn-asistente" aria-expanded="false" aria-controls="panel-asistente">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 5h16v11H9l-5 4z"/>
+    </svg>
+    <span>Asistente</span>
+  </button>
 
-      <details id="config-llave" class="config-llave">
-        <summary>Llave de la API de Anthropic</summary>
-        <p class="nota-llave">Se guarda solo en este navegador (localStorage). Nunca se sube al repositorio.</p>
-        <div class="fila-llave">
-          <input type="password" id="llave-api" placeholder="sk-ant-..." autocomplete="off" aria-label="Llave de la API">
-          <button type="button" id="guardar-llave">Guardar</button>
-          <button type="button" id="borrar-llave" class="secundario">Borrar</button>
-        </div>
-        <p id="estado-llave" class="estado-llave" aria-live="polite"></p>
-      </details>
-
-      <div id="respuesta" class="chat" aria-live="polite" aria-label="Conversación"></div>
-
-      <div class="sugerencias" aria-label="Preguntas sugeridas">
-        <button type="button" class="sugerencia" data-pregunta="Recorrido de arte en 2 horas">Recorrido de arte en 2 horas</button>
-        <button type="button" class="sugerencia" data-pregunta="¿Qué museos puedo visitar sin ayuda?">¿Qué museos puedo visitar sin ayuda?</button>
-        <button type="button" class="sugerencia" data-pregunta="¿Dónde está la rampa de la Catedral?">¿Dónde está la rampa de la Catedral?</button>
+  <aside id="panel-asistente" class="panel-flotante panel-asistente asistente" aria-label="Asistente" hidden>
+    <div class="panel-cabecera">
+      <h2>Pregúntale al asistente</h2>
+      <button type="button" class="cerrar-panel" data-panel="panel-asistente" aria-label="Cerrar asistente">&times;</button>
+    </div>
+    <p class="asistente-intro">Responde solo con los datos de esta página.</p>
+    <div class="sugerencias" aria-label="Preguntas sugeridas">
+      <button type="button" class="sugerencia" data-pregunta="Recorrido de arte en 2 horas">Recorrido de arte en 2 horas</button>
+      <button type="button" class="sugerencia" data-pregunta="¿Qué museos puedo visitar sin ayuda?">¿Qué museos puedo visitar sin ayuda?</button>
+      <button type="button" class="sugerencia" data-pregunta="¿Dónde está la rampa de la Catedral?">¿Dónde está la rampa de la Catedral?</button>
+    </div>
+    <div id="respuesta" class="chat" aria-live="polite" aria-label="Conversación"></div>
+    <form id="form-pregunta" class="form-pregunta">
+      <label for="pregunta" class="visualmente-oculto">Tu pregunta</label>
+      <textarea id="pregunta" rows="2" placeholder="Escribe tu pregunta..." required></textarea>
+      <button type="submit" id="btn-preguntar">Preguntar</button>
+    </form>
+    <details id="config-llave" class="config-llave">
+      <summary>Llave de la API de Anthropic</summary>
+      <p class="nota-llave">Se guarda solo en este navegador (localStorage). Nunca se sube al repositorio.</p>
+      <div class="fila-llave">
+        <input type="password" id="llave-api" placeholder="sk-ant-..." autocomplete="off" aria-label="Llave de la API">
+        <button type="button" id="guardar-llave">Guardar</button>
+        <button type="button" id="borrar-llave" class="secundario">Borrar</button>
       </div>
-
-      <form id="form-pregunta" class="form-pregunta">
-        <label for="pregunta" class="visualmente-oculto">Tu pregunta</label>
-        <textarea id="pregunta" rows="2" placeholder="Escribe tu pregunta..." required></textarea>
-        <button type="submit" id="btn-preguntar">Preguntar</button>
-      </form>
-    </section>
-  </main>
+      <p id="estado-llave" class="estado-llave" aria-live="polite"></p>
+    </details>
+  </aside>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>

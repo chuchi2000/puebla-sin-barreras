@@ -13,7 +13,7 @@ Frase: esto ayuda a personas en silla de ruedas a planear un recorrido por el Ce
 - Página estática: index.html, style.css, app.js, lugares.json, fotos/.
 - Sin frameworks, sin paso de build, sin backend.
 - Llave de la API: el usuario la pega en la app y se guarda en localStorage. Nunca va en el código ni en el repositorio.
-- Mapa: Leaflet desde CDN (unpkg) con tiles de OpenStreetMap y su atribución.
+- Mapa: Leaflet desde CDN (unpkg) con tiles de OpenStreetMap y su atribución. Los tiles se desaturan y aclaran con un filtro CSS (clase capa-base) para que resalten los marcadores. CARTO Positron se descartó porque desde 2025 exige llave de API.
 - Probar con `python -m http.server 8000` y abrir http://localhost:8000. Con doble clic el fetch de lugares.json no funciona.
 - Se publica en GitHub Pages.
 

@@ -8,10 +8,14 @@ const ESTADOS = {
 };
 
 const infoEstado = (estado) => ESTADOS[estado] ?? ESTADOS.sin_dato;
+const esCelular = () => window.matchMedia('(max-width: 899px)').matches;
 
 let lugares = [];
 let mapa;
 const marcadores = new Map();
+
+const ESTILO_NORMAL = { radius: 14, weight: 3, color: '#ffffff' };
+const ESTILO_RESALTADO = { radius: 18, weight: 4, color: '#1f3f8f' };
 
 const cargarLugares = async () => {
   const respuesta = await fetch('lugares.json');
@@ -20,27 +24,55 @@ const cargarLugares = async () => {
 };
 
 const crearMapa = () => {
-  mapa = L.map('mapa').setView([19.0433, -98.1983], 16);
+  mapa = L.map('mapa', { zoomControl: false, attributionControl: false }).setView([19.0433, -98.1983], 16);
+  // OSM sin llave; la clase capa-base lo desatura y aclara desde CSS para que resalten los marcadores.
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    className: 'capa-base',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(mapa);
+  L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(mapa);
+};
+
+// Margen para que los controles flotantes no tapen los marcadores
+const margenMapa = () => {
+  const alturaBarra = document.querySelector('.barra').offsetHeight + 24;
+  return { paddingTopLeft: [40, alturaBarra + 20], paddingBottomRight: [40, 110], maxZoom: 17 };
+};
+
+const ajustarMapa = (ids = null) => {
+  const puntos = [];
+  for (const [id, marcador] of marcadores) {
+    if (ids && !ids.includes(id)) continue;
+    if (mapa.hasLayer(marcador)) puntos.push(marcador.getLatLng());
+  }
+  if (puntos.length > 0) mapa.fitBounds(L.latLngBounds(puntos), margenMapa());
+};
+
+const centrarEn = (marcador) => {
+  const zoom = 17;
+  let centro = marcador.getLatLng();
+  // En celular la ficha sube desde abajo: dejamos el marcador en el tercio superior
+  if (esCelular()) {
+    const desplazamiento = mapa.getSize().y * 0.24;
+    centro = mapa.unproject(mapa.project(centro, zoom).add([0, desplazamiento]), zoom);
+  }
+  mapa.setView(centro, zoom);
 };
 
 const dibujarMarcadores = () => {
   for (const lugar of lugares) {
     if (lugar.lat == null || lugar.lng == null) continue;
-    const { color, texto } = infoEstado(lugar.estado);
+    const { color } = infoEstado(lugar.estado);
     const marcador = L.circleMarker([lugar.lat, lugar.lng], {
-      radius: 12,
-      color: '#333',
-      weight: 2,
+      ...ESTILO_NORMAL,
       fillColor: color,
-      fillOpacity: 0.9,
+      fillOpacity: 1,
     }).addTo(mapa);
-    marcador.bindPopup(`<strong>${lugar.nombre}</strong><br>${texto}`);
+    marcador.bindTooltip(lugar.nombre, { direction: 'top', offset: [0, -12] });
     marcador.on('click', () => {
-      if (window.matchMedia('(min-width: 900px)').matches) marcador.closePopup();
+      centrarEn(marcador);
       mostrarFicha(lugar);
     });
     marcadores.set(lugar.id, marcador);
@@ -102,12 +134,63 @@ const mostrarFicha = (lugar) => {
     <p class="nota-coordenadas">Coordenadas aproximadas del lugar, no de la entrada accesible.</p>
   `;
   ficha.querySelector('.cerrar-ficha').addEventListener('click', cerrarFicha);
-  ficha.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  ficha.hidden = false;
+  ficha.scrollTop = 0;
+  if (esCelular()) {
+    cerrarPanel('panel-lugares');
+    cerrarPanel('panel-asistente');
+  }
 };
 
 const cerrarFicha = () => {
-  document.getElementById('ficha').innerHTML =
-    '<p class="ficha-vacia">Toca un lugar en el mapa para ver su ficha de accesibilidad.</p>';
+  const ficha = document.getElementById('ficha');
+  ficha.hidden = true;
+  ficha.innerHTML = '';
+};
+
+// Paneles flotantes (lista y asistente)
+const botonDePanel = (idPanel) => document.querySelector(`[aria-controls="${idPanel}"]`);
+
+const abrirPanel = (idPanel) => {
+  document.getElementById(idPanel).hidden = false;
+  botonDePanel(idPanel).setAttribute('aria-expanded', 'true');
+};
+
+const cerrarPanel = (idPanel) => {
+  document.getElementById(idPanel).hidden = true;
+  botonDePanel(idPanel).setAttribute('aria-expanded', 'false');
+};
+
+const alternarPanel = (idPanel) => {
+  const panel = document.getElementById(idPanel);
+  if (panel.hidden) {
+    abrirPanel(idPanel);
+    if (esCelular()) {
+      // Solo una hoja abierta a la vez en celular
+      for (const otro of ['panel-lugares', 'panel-asistente']) if (otro !== idPanel) cerrarPanel(otro);
+      cerrarFicha();
+    }
+  } else {
+    cerrarPanel(idPanel);
+  }
+};
+
+const conectarPaneles = () => {
+  document.getElementById('btn-lugares').addEventListener('click', () => alternarPanel('panel-lugares'));
+  document.getElementById('btn-asistente').addEventListener('click', () => alternarPanel('panel-asistente'));
+  document.querySelectorAll('.cerrar-panel').forEach((boton) => {
+    boton.addEventListener('click', () => cerrarPanel(boton.dataset.panel));
+  });
+
+  const botonMas = document.getElementById('btn-mas-filtros');
+  const masFiltros = document.getElementById('mas-filtros');
+  botonMas.addEventListener('click', () => {
+    masFiltros.hidden = !masFiltros.hidden;
+    botonMas.setAttribute('aria-expanded', String(!masFiltros.hidden));
+  });
+
+  // La leyenda arranca plegada en celular
+  if (esCelular()) document.querySelector('.leyenda').open = false;
 };
 
 // Filtros
@@ -136,8 +219,7 @@ const aplicarFiltros = () => {
     else mapa.removeLayer(marcador);
   }
 
-  document.getElementById('contador').textContent =
-    visibles.length === 1 ? '1 lugar' : `${visibles.length} lugares`;
+  document.getElementById('contador').textContent = `Lugares (${visibles.length})`;
 
   const lista = document.getElementById('lista-lugares');
   lista.innerHTML = visibles
@@ -166,11 +248,7 @@ const irALugar = (id) => {
   const lugar = lugares.find((l) => l.id === id);
   const marcador = marcadores.get(id);
   if (!lugar) return;
-  if (marcador) {
-    mapa.setView(marcador.getLatLng(), 17);
-    // En escritorio la ficha va sobre el mapa; el popup solo estorba.
-    if (window.matchMedia('(max-width: 899px)').matches) marcador.openPopup();
-  }
+  if (marcador) centrarEn(marcador);
   mostrarFicha(lugar);
 };
 
@@ -181,6 +259,7 @@ const conectarFiltros = () => {
       boton.classList.add('activo');
       filtros.estado = boton.dataset.estado;
       aplicarFiltros();
+      if (filtros.estado === 'todos') ajustarMapa();
     });
   });
 
@@ -292,20 +371,15 @@ const separarIds = (texto) => {
   return { texto: texto.replace(coincidencia[0], '').trim(), ids };
 };
 
-const ESTILO_NORMAL = { radius: 12, weight: 2, color: '#333' };
-const ESTILO_RESALTADO = { radius: 16, weight: 4, color: '#1565c0' };
-
 const resaltarLugares = (ids) => {
   for (const marcador of marcadores.values()) marcador.setStyle(ESTILO_NORMAL);
-  const puntos = [];
   for (const id of ids) {
     const marcador = marcadores.get(id);
     if (!marcador) continue;
     marcador.setStyle(ESTILO_RESALTADO);
     marcador.bringToFront();
-    if (mapa.hasLayer(marcador)) puntos.push(marcador.getLatLng());
   }
-  if (puntos.length > 0) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 17 });
+  if (ids.length > 0) ajustarMapa(ids);
 };
 
 const conectarAsistente = () => {
@@ -367,7 +441,8 @@ const conectarAsistente = () => {
           `<p class="nota-resaltado">Lugares resaltados en el mapa: ${ids.length}. <button type="button" id="ver-mapa" class="secundario">Ver en el mapa</button></p>`
         );
         document.getElementById('ver-mapa').addEventListener('click', () => {
-          document.getElementById('mapa').scrollIntoView({ behavior: 'smooth' });
+          cerrarPanel('panel-asistente');
+          ajustarMapa(ids);
         });
       }
     } catch (error) {
@@ -396,14 +471,16 @@ const iniciar = async () => {
     crearMapa();
     lugares = await cargarLugares();
     dibujarMarcadores();
+    conectarPaneles();
     conectarFiltros();
     aplicarFiltros();
     conectarAsistente();
+    ajustarMapa();
   } catch (error) {
     console.error(error);
-    document.getElementById('mapa').insertAdjacentHTML(
-      'afterend',
-      `<p role="alert">No se pudieron cargar los lugares. Abre la página desde un servidor local (python -m http.server 8000).</p>`
+    document.querySelector('.barra').insertAdjacentHTML(
+      'beforeend',
+      `<p class="sin-resultados" role="alert">No se pudieron cargar los lugares. Abre la página desde un servidor local (python -m http.server 8000).</p>`
     );
   }
 };
