@@ -6,7 +6,7 @@
   <title>Puebla sin barreras</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@600;800&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,26 +16,23 @@
   </div>
 
   <header class="cabecera">
-    <div class="cabecera-contenido">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="13" cy="4" r="2"/>
-          <path d="M11 7v6h5l3 6"/>
-          <path d="M11 13l-2 1"/>
-          <path d="M7 12.5a5.5 5.5 0 1 0 7.5 7"/>
+    <div class="placa azulejo cabecera-placa">
+      <div class="simbolo" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="27" cy="8" r="4.5" fill="currentColor" stroke="none"/>
+          <path d="M24 15v13h11l5 12"/><path d="M24 21l-5 2"/><path d="M16 25a11.5 11.5 0 1 0 15.5 14.5"/>
         </svg>
       </div>
       <div class="titulos">
         <h1>Puebla sin barreras</h1>
-        <p>Planea tu recorrido en silla de ruedas por el Centro Histórico sabiendo antes qué lugares puedes visitar.</p>
+        <p>Las rampas del Centro Histórico existen pero no están señalizadas. Esta es la placa que falta: qué lugares puedes visitar en silla de ruedas antes de salir.</p>
       </div>
     </div>
-    <div class="banda-talavera" aria-hidden="true"></div>
   </header>
 
   <main class="app">
-    <section class="tarjeta filtros" aria-label="Filtros">
-      <h2 class="titulo-seccion">Filtrar lugares</h2>
+    <section class="placa azulejo panel filtros" aria-label="Filtros">
+      <h2 class="titulo-seccion">Buscar lugares</h2>
       <div class="grupo-estado" role="group" aria-label="Filtrar por estado">
         <button type="button" class="btn-estado activo" data-estado="todos">Todos</button>
         <button type="button" class="btn-estado" data-estado="verde"><span class="punto punto-verde"></span>Verde</button>
@@ -58,24 +55,24 @@
 
     <section class="zona-mapa" aria-label="Mapa de lugares">
       <div id="mapa"></div>
-      <ul class="leyenda" aria-label="Leyenda del semáforo">
+      <ul class="leyenda azulejo" aria-label="Leyenda del semáforo">
         <li><span class="punto punto-verde"></span> Verde: se entra y se recorre sin ayuda</li>
         <li><span class="punto punto-amarillo"></span> Amarillo: con ayuda o solo una parte</li>
         <li><span class="punto punto-rojo"></span> Rojo: no se puede entrar en silla</li>
         <li><span class="punto punto-gris"></span> Gris: por verificar</li>
       </ul>
-      <section id="ficha" class="ficha tarjeta" aria-live="polite" aria-label="Ficha del lugar">
+      <section id="ficha" class="ficha placa azulejo panel" aria-live="polite" aria-label="Ficha del lugar">
         <p class="ficha-vacia">Toca un lugar en el mapa para ver su ficha de accesibilidad.</p>
       </section>
     </section>
 
-    <section class="tarjeta resultados" aria-label="Lista de lugares">
+    <section class="placa azulejo panel resultados" aria-label="Lista de lugares">
       <h2 class="titulo-seccion">Lugares</h2>
       <ul id="lista-lugares" class="lista-lugares"></ul>
       <p id="sin-resultados" class="sin-resultados" role="status" hidden></p>
     </section>
 
-    <section class="tarjeta asistente" aria-label="Asistente">
+    <section class="placa azulejo panel asistente" aria-label="Asistente">
       <h2 class="titulo-seccion">Pregúntale al asistente</h2>
       <p class="asistente-intro">Responde solo con los datos de esta página.</p>
 
